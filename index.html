@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+<canvas id = "canvas" width="768" height="768" style="border: 10px solid black">
+</canvas>
+<script type="text/javascript">
+	const NONE = 0;
+	const KING = 1;
+	const QUEEN = 2;
+	const TOWER = 3;
+	const BISHOP = 4;
+	const KNIGHT = 5;
+	const PAWN = 6;
+	const BLACK = 7;
+	const WHITE = 8;
+	class Piece{
+		constructor(img, pieceType, player){
+			this.img = img;
+			this.type = pieceType; //null if the square is empty
+			this.player = player;
+		}
+	}
+	class Square{
+		constructor(id, piece, squareSize, x, y, i, j, greenBorder, redBorder, yellowBorder){
+			//2 character identifier formed by an uppercase letter and a number
+			this.id = id; 
+			//Piece
+			this.piece = piece;
+			this.squareSize = squareSize;
+			//Border images
+			this.greenBorder = greenBorder;
+			this.redBorder = redBorder;
+			this.yellowBorder = yellowBorder;
+			//Coordinates x and y of the upper left corner of the square
+			this.x = x;
+			this.y = y;
+			//Position whithin the board
+			this.i = i;
+			this.j = j;
+			//Indicates whether this square is a possible movement 
+			//for a selected piece in another one
+			this.possibleMovement = false;
+			//Indicates whether this square is selected
+			this.selected = false;
+		}
+		render(context){
+			if(this.piece != null){
+				context.drawImage(this.piece.img, this.x, this.y);
+			}
+			if(this.possibleMovement){
+				if(this.piece != null){
+					context.drawImage(this.redBorder, this.x, this.y);
+				}else{
+					context.drawImage(this.greenBorder, this.x, this.y);
+				}
+			}else if(this.selected){
+				context.drawImage(this.yellowBorder, this.x, this.y);
+			}
+		}
+		hover(mouseX, mouseY){
+			if(mouseX >= this.x && mouseX < this.x + this.squareSize &&
+				mouseY >= this.y && mouseY < this.y + this.squareSize){
+				return true;
+			}
+		}
+	}	
+
+	//Canvas setup
+	var canvas = document.getElementById("canvas");
+	var context = canvas.getContext("2d");
+	var time = Date.now();
+	window.setInterval(update, 16);
+	//Global variables declaration
+	var playerTurn = WHITE;
+	var squareSize = 96; //Size in px of the side of a square
+	var mouseX = 0; //Last known position of the pointer
+	var mouseY = 0;
+	var boardBg = new Image();
+	var greenBorder = new Image();
+	var redBorder = new Image();
+	var yellowBorder = new Image();
+	var lastSelectedSquare  = null;
+	var board = new Array(8);
+	for(let i = 0; i < 8; i++){
+		board[i] = new Array(8);
+	}
+	var rect = canvas.getBoundingClientRect();
+	var canvasX=rect.left;
+	var canvasY=rect.top;
+	var whiteCastlingAvailable = true;
+	var blackCastlingAvailable = true;
+	//Global variables initialization
+	boardBg.src = "assets/images/BrownBoardSmall.png";
+	greenBorder.src = "assets/images/GreenBorder.png";
+	redBorder.src = "assets/images/RedBorder.png";
+	yellowBorder.src = "assets/images/YellowBorder.png";
+	initializeBoard();
+	//Handlers setup
+	window.addEventListener("mousedown", function(event) {
+		mouseX = event.clientX - canvasX - 10;
+		mouseY =  event.clientY - canvasY - 8;
+		let selectedSquare = null;
+		for(let i = 0; i < 8; i++){
+			for(let j = 0; j < 8; j ++){
+				if(board[i][j].hover(mouseX, mouseY)){
+					selectedSquare = board[i][j];
+					break;
+				}
+			}
+			if(selectedSquare != null){
+					break;
+			}
+		}
+		if(selectedSquare != null && selectedSquare.piece != null &&
+				playerTurn == selectedSquare.piece.player){
+			clearSelectedSquares();
+			selectedSquare.selected = true;
+			setPossibleMovements(selectedSquare);
+			lastSelectedSquare = selectedSquare;
+		}else if(selectedSquare.possibleMovement == true){
+			//Check for a castling move
+			if(whiteCastlingAvailable || blackCastlingAvailable){
+				if(selectedSquare.i == 7 && selectedSquare.j == 2 &&
+						lastSelectedSquare.piece.type == KING &&
+						whiteCastlingAvailable){
+					castlingLeft(lastSelectedSquare);
+					//Clear all selections
+					clearPossibleMovements();
+					clearSelectedSquares();
+					whiteCastlingAvailable = false;
+					//Give the turn to the other player
+					if(playerTurn == WHITE){
+						playerTurn = BLACK;
+					}else{
+						playerTurn = WHITE;
+					}
+					return;
+				}else if(selectedSquare.i == 0 && selectedSquare.j == 2 &&
+						lastSelectedSquare.piece.type == KING &&
+						blackCastlingAvailable){
+					castlingLeft(lastSelectedSquare);
+					//Clear all selections
+					clearPossibleMovements();
+					clearSelectedSquares();
+					blackCastlingAvailable = false;
+					//Give the turn to the other player
+					if(playerTurn == WHITE){
+						playerTurn = BLACK;
+					}else{
+						playerTurn = WHITE;
+					}
+					return;
+				}else if(selectedSquare.i == 7 && selectedSquare.j == 6 &&
+						lastSelectedSquare.piece.type == KING &&
+						whiteCastlingAvailable){
+					castlingRight(lastSelectedSquare);
+					//Clear all selections
+					clearPossibleMovements();
+					clearSelectedSquares();
+					whiteCastlingAvailable = false;
+					//Give the turn to the other player
+					if(playerTurn == WHITE){
+						playerTurn = BLACK;
+					}else{
+						playerTurn = WHITE;
+					}
+					return;
+				}else if(selectedSquare.i == 0 && selectedSquare.j == 6 &&
+						lastSelectedSquare.piece.type == KING &&
+						blackCastlingAvailable){
+					castlingRight(lastSelectedSquare);
+					//Clear all selections
+					clearPossibleMovements();
+					clearSelectedSquares();
+					blackCastlingAvailable = false;
+					//Give the turn to the other player
+					if(playerTurn == WHITE){
+						playerTurn = BLACK;
+					}else{
+						playerTurn = WHITE;
+					}
+					return;
+				}else{
+					//If the king or the tower have moved, disable castling 
+					//for that player
+					if(lastSelectedSquare.piece.type == KING || lastSelectedSquare.piece.type == TOWER){
+						if(playerTurn == WHITE){
+							console.log("white castling disabled");
+							whiteCastlingAvailable = false;
+						}else{
+							console.log("black castling disabled");
+							blackCastlingAvailable = false;
+						}
+					}
+				}
+			}
+			//Moves the piece to the selected square. If the movement is set as possible,
+			//there are no conflicts in doing this
+			selectedSquare.piece = lastSelectedSquare.piece;
+			lastSelectedSquare.piece = null;
+			//Clear all selections
+			clearPossibleMovements();
+			clearSelectedSquares();
+			//Give the turn to the other player
+			if(playerTurn == WHITE){
+				playerTurn = BLACK;
+			}else{
+				playerTurn = WHITE;
+			}
+		}else if(selectedSquare != null && selectedSquare.piece == null){
+			clearPossibleMovements();
+			clearSelectedSquares();
+		}
+	});
+
+	function update() {
+		//Called 60 times per second
+		render();
+	}
+
+	function render() {
+		context.clearRect(0,0,canvas.width,canvas.height);
+		//Draw the boardBg
+		context.drawImage(boardBg, 0, 0);
+		//Draw the pieces
+		for(let i = 0; i < 8; i++){
+			for(let j = 0; j < 8; j ++){
+				//Because i is the row number and j the column
+				board[i][j].render(context);
+			}
+		}
+	}
+
+	function setPossibleMovements(selectedSquare){
+		clearPossibleMovements();
+		let possibleMovements = new Array(0);
+		let i;
+		let j;
+		switch(selectedSquare.piece.type){
+			case PAWN:
+				if(selectedSquare.piece.player == WHITE && playerTurn == WHITE){
+					if(selectedSquare.i == 6){
+						for(i = selectedSquare.i - 1; i >= selectedSquare.i - 2; i--){
+							if(board[i][selectedSquare.j].piece == null){
+								possibleMovements.push(board[i][selectedSquare.j]);
+							}else{
+								break;
+							}
+						}
+						for(let i = 0; i < possibleMovements.length; i++){
+							possibleMovements[i].possibleMovement = true;
+						}
+					}else{
+						//Forward movement
+						if(selectedSquare.i - 1 >= 0){
+							if(board[selectedSquare.i - 1][selectedSquare.j].piece == null){
+								possibleMovements.push(board[selectedSquare.i - 1][selectedSquare.j]);
+							}
+						}
+						//Diagonal movement
+						if(selectedSquare.i - 1 < 0){
+							break;
+						}
+						if(selectedSquare.j - 1 >= 0){
+							if(board[selectedSquare.i - 1][selectedSquare.j - 1].piece != null){
+								if(board[selectedSquare.i - 1][selectedSquare.j - 1].piece.player == BLACK){
+									possibleMovements.push(board[selectedSquare.i - 1][selectedSquare.j - 1]);
+								}
+							}
+						}
+						if(selectedSquare.j + 1 < 8){
+							if(board[selectedSquare.i - 1][selectedSquare.j + 1].piece != null){
+								if(board[selectedSquare.i - 1][selectedSquare.j + 1].piece.player == BLACK){
+									possibleMovements.push(board[selectedSquare.i - 1][selectedSquare.j + 1]);
+								}
+							}
+						}
+						//If there is a piece of the same player in the next square, it is not
+						//marked as a possible movement, this applies to the movements of all pieces
+						for(let i = 0; i < possibleMovements.length; i++){
+							possibleMovements[i].possibleMovement = true;
+							if(possibleMovements[i].piece != null){
+								if(possibleMovements[i].piece.player == WHITE){
+									possibleMovements[i].possibleMovement = false;
+								}
+							}
+						}
+					}
+				}else if(playerTurn == BLACK){
+					if(selectedSquare.i == 1){
+						for(i = selectedSquare.i + 1; i <= selectedSquare.i + 2; i++){
+							if(board[i][selectedSquare.j].piece == null){
+								possibleMovements.push(board[i][selectedSquare.j]);
+							}else{
+								break;
+							}
+						}
+						for(let i = 0; i < possibleMovements.length; i++){
+							possibleMovements[i].possibleMovement = true;
+						}
+					}else{
+						//If there is a piece of the same player in the next square, it is not
+						//marked as a possible movement, this applies to the movements of all pieces
+
+						//Forward movement
+						if(selectedSquare.i + 1 < 8){
+							if(board[selectedSquare.i + 1][selectedSquare.j].piece == null){
+								possibleMovements.push(board[selectedSquare.i + 1][selectedSquare.j]);
+							}
+						}
+						//Diagonal movement
+						if(selectedSquare.i + 1 >= 8){
+							break;
+						}
+						if(selectedSquare.j - 1 >= 0){
+							if(board[selectedSquare.i + 1][selectedSquare.j - 1].piece != null){
+								if(board[selectedSquare.i + 1][selectedSquare.j - 1].piece.player == WHITE){
+									possibleMovements.push(board[selectedSquare.i + 1][selectedSquare.j - 1]);
+								}
+							}
+						}
+						if(selectedSquare.j + 1 < 8){
+							if(board[selectedSquare.i + 1][selectedSquare.j + 1].piece != null){
+								if(board[selectedSquare.i + 1][selectedSquare.j + 1].piece.player == WHITE){
+									possibleMovements.push(board[selectedSquare.i + 1][selectedSquare.j + 1]);
+								}
+							}
+						}
+						//If there is a piece of the same player in the next square, it is not
+						//marked as a possible movement, this applies to the movements of all pieces
+						for(let i = 0; i < possibleMovements.length; i++){
+							possibleMovements[i].possibleMovement = true;
+							if(possibleMovements[i].piece != null){
+								if(possibleMovements[i].piece.player == BLACK){
+									possibleMovements[i].possibleMovement = false;
+								}
+							}
+						}
+					}
+				}
+				break;
+			case TOWER:
+				//Up
+				for(i = selectedSquare.i - 1; i >= 0; i--){
+					possibleMovements.push(board[i][selectedSquare.j]);
+					if(board[i][selectedSquare.j].piece != null){
+						break
+					}
+				}
+				//Down
+				for(i = selectedSquare.i + 1; i < 8; i++){
+					possibleMovements.push(board[i][selectedSquare.j]);
+					if(board[i][selectedSquare.j].piece != null){
+						break
+					}
+				}
+				//Left
+				for(j = selectedSquare.j - 1; j >= 0; j--){
+					possibleMovements.push(board[selectedSquare.i][j]);
+					if(board[selectedSquare.i][j].piece != null){
+						break
+					}
+				}
+				//Right
+				for(j = selectedSquare.j + 1; j < 8; j++){
+					possibleMovements.push(board[selectedSquare.i][j]);
+					if(board[selectedSquare.i][j].piece != null){
+						break
+					}
+				}
+				
+				for(i = 0; i < possibleMovements.length; i++){
+					possibleMovements[i].possibleMovement = true;
+					if(possibleMovements[i].piece != null){
+						if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+							possibleMovements[i].possibleMovement = false;
+						}
+					}
+				}
+				break;
+			case KNIGHT:
+				//Up
+				i = selectedSquare.i - 2;
+				//Up and Left
+				j = selectedSquare.j - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Up and right
+				j = selectedSquare.j + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+
+				//Down
+				i = selectedSquare.i + 2;
+				//Down and Left
+				j = selectedSquare.j - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Down and right
+				j = selectedSquare.j + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+
+				//Left
+				j = selectedSquare.j - 2;
+				//Left and up
+				i = selectedSquare.i - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Left and down
+				i = selectedSquare.i + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+
+				//Right
+				j = selectedSquare.j + 2;
+				//Right and up
+				i = selectedSquare.i - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Right and down
+				i = selectedSquare.i + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+
+				for(i = 0; i < possibleMovements.length; i++){
+					possibleMovements[i].possibleMovement = true;
+					if(possibleMovements[i].piece != null){
+						if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+							possibleMovements[i].possibleMovement = false;
+						}
+					}
+				}
+				break;
+			case BISHOP:
+				//Upper Left
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j - 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i--;
+					j--;
+				}
+
+				//Upper Right
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j + 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i--;
+					j++;
+				}
+
+				//Lower Left
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j - 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i++;
+					j--;
+				}
+
+				//Lower Right
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j + 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i++;
+					j++;
+				}
+
+				for(i = 0; i < possibleMovements.length; i++){
+					possibleMovements[i].possibleMovement = true;
+					if(possibleMovements[i].piece != null){
+						if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+							possibleMovements[i].possibleMovement = false;
+						}
+					}
+				}
+				break;
+			case QUEEN:
+				//Up
+				for(i = selectedSquare.i - 1; i >= 0; i--){
+					possibleMovements.push(board[i][selectedSquare.j]);
+					if(board[i][selectedSquare.j].piece != null){
+						break
+					}
+				}
+				//Down
+				for(i = selectedSquare.i + 1; i < 8; i++){
+					possibleMovements.push(board[i][selectedSquare.j]);
+					if(board[i][selectedSquare.j].piece != null){
+						break
+					}
+				}
+				//Left
+				for(j = selectedSquare.j - 1; j >= 0; j--){
+					possibleMovements.push(board[selectedSquare.i][j]);
+					if(board[selectedSquare.i][j].piece != null){
+						break
+					}
+				}
+				//Right
+				for(j = selectedSquare.j + 1; j < 8; j++){
+					possibleMovements.push(board[selectedSquare.i][j]);
+					if(board[selectedSquare.i][j].piece != null){
+						break
+					}
+				}
+				//Upper Left
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j - 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i--;
+					j--;
+				}
+				//Upper Right
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j + 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i--;
+					j++;
+				}
+				//Lower Left
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j - 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i++;
+					j--;
+				}
+				//Lower Right
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j + 1;
+				while(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+					if(board[i][j].piece != null){
+						break;
+					}
+					i++;
+					j++;
+				}
+
+				for(i = 0; i < possibleMovements.length; i++){
+					possibleMovements[i].possibleMovement = true;
+					if(possibleMovements[i].piece != null){
+						if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+							possibleMovements[i].possibleMovement = false;
+						}
+					}
+				}
+
+				break;
+			case KING:
+				//Up
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j;
+				if(i >= 0){
+					possibleMovements.push(board[i][j]);
+				}
+				//Down
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j;
+				if(i < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Left
+				i = selectedSquare.i;
+				j = selectedSquare.j - 1;
+				if(j >= 0){
+					possibleMovements.push(board[i][j]);
+				}
+				//Right
+				i = selectedSquare.i;
+				j = selectedSquare.j + 1;
+				if(j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Upper Left
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Upper Right
+				i = selectedSquare.i - 1;
+				j = selectedSquare.j + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Lower Left
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j - 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Lower Right
+				i = selectedSquare.i + 1;
+				j = selectedSquare.j + 1;
+				if(i >= 0 && j >= 0 && i < 8 && j < 8){
+					possibleMovements.push(board[i][j]);
+				}
+				//Castling check
+				if(playerTurn == WHITE && whiteCastlingAvailable){
+					//Left
+					if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 3].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
+					}
+					//Right
+					if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j + 2].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
+					}
+				}else if(blackCastlingAvailable){
+					//Left
+					if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 3].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
+					}
+					//Right
+					if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j + 2].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
+					}
+				}
+
+				for(i = 0; i < possibleMovements.length; i++){
+					possibleMovements[i].possibleMovement = true;
+					if(possibleMovements[i].piece != null){
+						if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+							possibleMovements[i].possibleMovement = false;
+						}
+					}
+				}
+				break;
+		}
+	}
+
+	function castlingLeft(selectedSquare){
+		//Move the king 2 squares to the left
+		board[selectedSquare.i][selectedSquare.j - 2].piece = 
+			board[selectedSquare.i][selectedSquare.j].piece;
+		board[selectedSquare.i][selectedSquare.j].piece = null;
+		//Move the tower 3 squares to the right
+		board[selectedSquare.i][selectedSquare.j - 1].piece = 
+			board[selectedSquare.i][selectedSquare.j - 4].piece;
+		board[selectedSquare.i][selectedSquare.j - 4].piece = null;
+	}
+
+	function castlingRight(selectedSquare){
+		//Move the king 2 squares to the right
+		board[selectedSquare.i][selectedSquare.j + 2].piece = 
+			board[selectedSquare.i][selectedSquare.j].piece;
+		board[selectedSquare.i][selectedSquare.j].piece = null;
+		//Move the tower 2 squares to the left
+		board[selectedSquare.i][selectedSquare.j + 1].piece = 
+			board[selectedSquare.i][selectedSquare.j + 3].piece;
+		board[selectedSquare.i][selectedSquare.j + 3].piece = null;
+	}
+
+	function clearPossibleMovements(){
+		for(let i = 0; i < 8; i++){
+			for(let j = 0; j < 8; j++){
+				board[i][j].possibleMovement = false;
+			}
+		}
+	}
+
+	function clearSelectedSquares(){
+		for(let i = 0; i < 8; i++){
+			for(let j = 0; j < 8; j++){
+				board[i][j].selected = false;
+			}
+		}
+	}
+
+	function initializeBoard(){
+		for(let i = 0; i < 8; i++){
+			for(let j = 0; j < 8; j++){
+				//generate id
+				let number = 8 - i;
+				let letter = "";
+				switch(j){
+					case 0:
+						letter = 'a';
+						break;
+					case 1:
+						letter = 'b';
+						break;
+					case 2:
+						letter = 'c';
+						break;
+					case 3:
+						letter = 'd';
+						break;
+					case 4:
+						letter = 'e';
+						break;
+					case 5:
+						letter = 'f';
+						break;
+					case 6:
+						letter = 'g';
+						break;
+					case 7:
+						letter = 'h';
+						break;
+				}
+				id = letter + number;
+
+				//generate Image, piece type and player
+				let img = new Image;
+				let type;
+				let player;
+				if(i == 1){
+					img.src = "assets/images/BlackPawnAlt.png";
+					type = PAWN;
+					player = BLACK;
+				}else if(i == 6){
+					img.src = "assets/images/WhitePawn.png";
+					type = PAWN;
+					player = WHITE;
+				}
+				if(letter == 'a' || letter == 'h'){
+					if(i == 0){
+						img.src = "assets/images/BlackTower.png";
+						type = TOWER;
+						player = BLACK;
+					}else if(i == 7){
+						img.src = "assets/images/WhiteTower.png";
+						type = TOWER;
+						player = WHITE;
+					}
+				}else if(letter == 'b' || letter == 'g'){
+					if(i == 0){
+						img.src = "assets/images/BlackHorse.png";
+						type = KNIGHT;
+						player = BLACK;
+					}else if(i == 7){
+						img.src = "assets/images/WhiteHorse.png";
+						type = KNIGHT;
+						player = WHITE;
+					}
+				}else if(letter == 'c' || letter == 'f'){
+					if(i == 0){
+						img.src = "assets/images/BlackBishop.png";
+						type = BISHOP;
+						player = BLACK;
+					}else if(i == 7){
+						img.src = "assets/images/WhiteBishop.png";
+						type = BISHOP;
+						player = WHITE;
+					}
+				}else if(letter == 'd'){
+					if(i == 0){
+						img.src = "assets/images/BlackQueen.png";
+						type = QUEEN;
+						player = BLACK;
+					}else if(i == 7){
+						img.src = "assets/images/WhiteQueen.png";
+						type = QUEEN;
+						player = WHITE;
+					}
+				}else if(letter == 'e'){
+					if(i == 0){
+						img.src = "assets/images/BlackKing.png";
+						type = KING;
+						player = BLACK;
+					}else if(i == 7){
+						img.src = "assets/images/WhiteKing.png";
+						type = KING;
+						player = WHITE;
+					}
+				}
+
+				//Create square and piece and fill it in the board
+				let piece = null;
+				if(type != null){
+					piece = new Piece(img, type, player);
+				}
+				board[i][j] = new Square(id, piece, squareSize, squareSize * j, squareSize * i, i, j,  greenBorder, redBorder, yellowBorder);
+			}
+		}
+	}
+
+</script>
+</body>
+</html>
