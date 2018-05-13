@@ -22,16 +22,22 @@ function minimax(node, player, ply, initialNode){
 	let heuristicValues = new Array(0);
 	let options = new Array(0);
 
-	if(player == MIN){
-		nextPlayer = MAX;
-	}else{
-		nextPlayer = MIN;
-	}
-
 	if(ply != 0){
 		children = getChildren(node);
 		for(let i = 0; i < children.length; i++){
-			heuristicValues.push(minimax(children[i], nextPlayer, ply - 1, false));
+			if(player == MIN){
+				heuristicValues.push(minimax(children[i], MAX, ply - 1, false));
+			}else{
+				heuristicValues.push(minimax(children[i], MIN, ply - 1, false));
+			}
+		}
+		if(initialNode){
+			console.log("Offered to initialNode:");
+		}
+		if(player == MIN){
+			console.log("Offered to MIN node (level", ply, "): ", heuristicValues);
+		}else{
+			console.log("Offered to MAX: node (level", ply, "): ", heuristicValues);
 		}
 		if(initialNode){
 			//Get the index of the node with the Larger or Smaller value
@@ -66,14 +72,6 @@ function minimax(node, player, ply, initialNode){
 						return previousVal;
 					}
 				});
-				//If there are several nodes with the same value, only the first one
-				//is returned
-				//console.log("HValues: ", heuristicValues);
-				//console.log("Max: ", max);
-				//console.log("Index of max: ", heuristicValues.indexOf(max));
-				//console.log("Chosen node: ", children[heuristicValues.indexOf(max)]);
-				//console.log("Children: ", children.length, ", HValues: ", heuristicValues.length);
-
 				//Search for all the nodes that share the same heuristic value,
 				//if there are more than one, and return them
 				for(let index = 0; index < heuristicValues.length; index++){

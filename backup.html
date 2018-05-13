@@ -20,14 +20,6 @@
 	const WHITE = 8;
 	const MAX = BLACK;
 	const MIN = WHITE;
-	class Movement{
-		constructor(srci, srcj, desti, destj){
-			this.srci = srci;
-			this.srcj = srcj;
-			this.desti = desti;
-			this.destj = destj;
-		}
-	}
 	class Piece{
 		constructor(img, pieceType, player){
 			this.img = img;
@@ -58,7 +50,6 @@
 			//Indicates whether this square is selected
 			this.selected = false;
 		}
-		
 		render(context){
 			if(this.piece != null){
 				context.drawImage(this.piece.img, this.x, this.y);
@@ -73,7 +64,6 @@
 				context.drawImage(this.yellowBorder, this.x, this.y);
 			}
 		}
-
 		hover(mouseX, mouseY){
 			if(mouseX >= this.x && mouseX < this.x + this.squareSize &&
 				mouseY >= this.y && mouseY < this.y + this.squareSize){
@@ -89,7 +79,7 @@
 	window.setInterval(update, 16);
 	//Global variables declaration
 	var playerTurn = WHITE;
-	var AIPlayer = BLACK;
+	var IAPlayer = BLACK;
 	var squareSize = 96; //Size in px of the side of a square
 	var mouseX = 0; //Last known position of the pointer
 	var mouseY = 0;
@@ -107,9 +97,6 @@
 	var canvasY=rect.top;
 	var whiteCastlingAvailable = true;
 	var blackCastlingAvailable = true;
-	var whiteCastlingAvailableTest = true;
-	var blackCastlingAvailableTest = true;
-	var movementMap = new Map();
 	//Global variables initialization
 	boardBg.src = "assets/images/BrownBoardSmall.png";
 	greenBorder.src = "assets/images/GreenBorder.png";
@@ -132,15 +119,7 @@
 					break;
 			}
 		}
-		if(selectedSquare == null){
-			return;
-		}else if(selectedSquare.possibleMovement == false){
-			selectSquare(selectedSquare, currentBoard);
-		}else{
-			commitMovement(lastSelectedSquare, selectedSquare);
-			//Give the turn to the other player
-			changeTurn();
-		}
+		selectSquare(selectedSquare, false, currentBoard);
 	});
 
 	function update() {
@@ -164,17 +143,10 @@
 	/*
 	Sets the possibleMovement attribute of each square that is a
 	legal movement for the piece in the square that was selected to true
-	Arguments:
-		-selectedSquare: The square containing the piece from which we want 
-		to know the possible movements
-		-board: The board in which the square is
-		-test: Whether this call is a test by the AI, in which case the AI
-		specific flags for the castling check will be used
 	Returns:
-		-A list of the squares that were selected as possible movements for 
-		the piece in the selectedSquare
+		-A list of the squares that were selected as possible movements
 	*/
-	function getPossibleMovements(selectedSquare, board, test){
+	function setPossibleMovements(selectedSquare, board){
 		clearPossibleMovements(board);
 		let possibleMovements = new Array(0);
 		let selectedMovements = new Array(0);
@@ -220,6 +192,7 @@
 							}
 						}
 					}
+					
 				}else if(playerTurn == BLACK){
 					if(selectedSquare.i == 1){
 						for(i = selectedSquare.i + 1; i <= selectedSquare.i + 2; i++){
@@ -516,57 +489,29 @@
 					possibleMovements.push(board[i][j]);
 				}
 				//Castling check
-				if(!test){
-					if(playerTurn == WHITE && whiteCastlingAvailable){
-						//Left
-						if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 3].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
-						}
-						//Right
-						if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j + 2].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
-						}
-					}else if(playerTurn == BLACK && blackCastlingAvailable){
-						//Left
-						if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 3].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
-						}
-						//Right
-						if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j + 2].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
-						}
+				if(playerTurn == WHITE && whiteCastlingAvailable){
+					//Left
+					if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 3].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
 					}
-				}else{
-					if(playerTurn == WHITE && whiteCastlingAvailableTest){
-						//Left
-						if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 3].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
-						}
-						//Right
-						if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j + 2].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
-						}
-					}else if(playerTurn == BLACK && blackCastlingAvailableTest){
-						//Left
-						if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
-								board[selectedSquare.i][selectedSquare.j - 3].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
-						}
-						//Right
-						if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
-								board[selectedSquare.i][selectedSquare.j + 2].piece == null){
-							possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
-						}
+					//Right
+					if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j + 2].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
+					}
+				}else if(playerTurn == BLACK && blackCastlingAvailable){
+					//Left
+					if(board[selectedSquare.i][selectedSquare.j - 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 2].piece == null &&
+							board[selectedSquare.i][selectedSquare.j - 3].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j - 2]);
+					}
+					//Right
+					if(board[selectedSquare.i][selectedSquare.j + 1].piece == null &&
+							board[selectedSquare.i][selectedSquare.j + 2].piece == null){
+						possibleMovements.push(board[selectedSquare.i][selectedSquare.j + 2]);
 					}
 				}
 				break;
@@ -574,9 +519,11 @@
 		//If there is a piece of the same player in the next square, it is not
 		//marked as a possible movement, this applies to the movements of all pieces
 		for(i = 0; i < possibleMovements.length; i++){
+			possibleMovements[i].possibleMovement = true;
 			selectedMovements.push(possibleMovements[i]);
 			if(possibleMovements[i].piece != null){
 				if(possibleMovements[i].piece.player == selectedSquare.piece.player){
+					possibleMovements[i].possibleMovement = false;
 					selectedMovements.pop();
 				}
 			}
@@ -584,12 +531,10 @@
 		return selectedMovements;
 	}
 
-	/*
-	Uses the MINIMAX algorithm to determine the best movement
-	to choose and performs it
-	*/
+	//Uses the MINIMAX algorithm to determine the best movement
+	//to choose and performs it
 	function doAITurn(){
-		//Performs all the operations from a deep clone of the current board
+		//Performs all the operations from a clone of the current board
 		let boardClone = new Array(8);
 		for(let i = 0; i < 8; i++){
 			boardClone[i] = new Array(8);
@@ -604,7 +549,7 @@
 				jQuery.extend(true, boardClone[i][j], currentBoard[i][j]);
 			}
 		}
-		movementMap.clear();
+
 		let options = minimax(boardClone, BLACK, 2, true);
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
@@ -614,11 +559,8 @@
 		//Clears all previously set possible movements and selected squares
 		clearSelectedSquares(newBoard);
 		clearPossibleMovements(newBoard);
-		//Determines which movement was done and commits it
-		let movement = movementMap.get(newBoard);
-		playerTurn == AIPlayer;
-		commitMovement(currentBoard[movement.srci][movement.srcj],
-						currentBoard[movement.desti][movement.destj]);
+		currentBoard = newBoard;
+		playerTurn = WHITE;
 	}
 
 	/*
@@ -639,24 +581,16 @@
 						clearSelectedSquares(node);
 						clearPossibleMovements(node);
 						//Gets a list of all the possible movements for that piece
-						let possibleMovements = getPossibleMovements(node[i][j], node, true);
+						let possibleMovements = setPossibleMovements(node[i][j], node);
 						//Sets the last selected square to this one
 						lastSelectedSquare = node[i][j];
-						//Gets the board generated from each possible movement and stores
-						//the movement that was done in the map
+						//Gets the board generated from each possible movement
 						for(let index = 0; index < possibleMovements.length; index++){
-							let newNode = testMovement(
-								lastSelectedSquare,
-								possibleMovements[index],
-								node
-							);
+							let newNode = selectSquare(possibleMovements[index], true, node);
 							children.push(newNode);
-							movementMap.set(newNode, new Movement(
-								lastSelectedSquare.i,
-								lastSelectedSquare.j, 
-								possibleMovements[index].i,
-								possibleMovements[index].j)
-							);
+							//if(lastSelectedSquare.piece.type == PAWN){
+							//	console.log(possibleMovements);
+							//}
 						}
 					}
 				}
@@ -720,14 +654,16 @@
 	}
 
 	/*
-	Arguments:
-		-movementSrc: The square in which the piece to move is
-		-movementDest: The square to move the piece to
-		-board: The board in which the movement is done
+	PRE: The square passed as argument belongs to the passed board
+
+	Argument:
+		-selectedSquare: The square that was clicked or chosen by minimax
+		-test: Whether this call is or not a test by the AI algorithm, if
+				true, no changes are made on the original board
 	Returns:
-		-A deep copy of the provided board with the movement done
+		-The board that generated from a movement, if any was done
 	*/
-	function testMovement(movementSrc, movementDest, board){
+	function selectSquare(selectedSquare, test, board){
 		//Creates a clone of the provided board in which to make test changes
 		let newBoard = new Array(8);
 		for(let i = 0; i < 8; i++){
@@ -744,170 +680,112 @@
 			}
 		}
 
-		let castlingDone = false;
-		//Check for a castling move
-		if(whiteCastlingAvailableTest || blackCastlingAvailableTest){
-			if(movementDest.i == 7 && movementDest.j == 2 &&
-					movementSrc.piece.type == KING &&
-					whiteCastlingAvailableTest){
-				
-				castlingLeft(movementSrc, currentBoard);
-				whiteCastlingAvailableTest = false;
-				castlingDone = true;
-				
-			}else if(movementDest.i == 0 && movementDest.j == 2 &&
-					movementSrc.piece.type == KING &&
-					blackCastlingAvailableTest){
-
-				castlingLeft(movementSrc, currentBoard);
-				blackCastlingAvailableTest = false;
-				castlingDone = true;
-
-			}else if(movementDest.i == 7 && movementDest.j == 6 &&
-					movementSrc.piece.type == KING &&
-					whiteCastlingAvailableTest){
-				
-				castlingRight(movementSrc, currentBoard);
-				whiteCastlingAvailableTest = false;
-				castlingDone = true;
-				
-			}else if(movementDest.i == 0 && movementDest.j == 6 &&
-					movementSrc.piece.type == KING &&
-					blackCastlingAvailableTest){
-
-				castlingRight(movementSrc, currentBoard);
-				blackCastlingAvailableTest = false;
-				castlingDone = true;
-
-			}else{
-				//If the king or the tower have moved, disable castling 
-				//for that player
-				if(movementSrc.piece.type == KING || movementSrc.piece.type == TOWER){
-					if(playerTurn == WHITE){
-						whiteCastlingAvailableTest = false;
-					}else{
-						blackCastlingAvailableTest = false;
-					}
-				}
-			}
-		}
-
-		if(!castlingDone){
-			//Moves the piece only in the cloned board
-			newBoard[movementDest.i][movementDest.j].piece = 
-					newBoard[movementSrc.i][movementSrc.j].piece;
-			newBoard[movementSrc.i][movementSrc.j].piece = null;
-		}
-
-		//Clear all selections in the cloned board
-		clearPossibleMovements(newBoard);
-		clearSelectedSquares(newBoard);
-		return newBoard;
-	}
-
-	/*
-	Arguments:
-		-movementSrc: The square in which the piece to move is
-		-movementDest: The square to move the piece to
-	Performs a movement in the current board
-	*/
-	function commitMovement(movementSrc, movementDest){
-		let castlingDone = false;
-		//Check for a castling move
-		if(whiteCastlingAvailable || blackCastlingAvailable){
-			if(movementDest.i == 7 && movementDest.j == 2 &&
-					movementSrc.piece.type == KING &&
-					whiteCastlingAvailable){
-				
-				castlingLeft(movementSrc, currentBoard);
-				whiteCastlingAvailable = false;
-				castlingDone = true;
-				
-			}else if(movementDest.i == 0 && movementDest.j == 2 &&
-					movementSrc.piece.type == KING &&
-					blackCastlingAvailable){
-
-				castlingLeft(movementSrc, currentBoard);
-				blackCastlingAvailable = false;
-				castlingDone = true;
-
-			}else if(movementDest.i == 7 && movementDest.j == 6 &&
-					movementSrc.piece.type == KING &&
-					whiteCastlingAvailable){
-				
-				castlingRight(movementSrc, currentBoard);
-				whiteCastlingAvailable = false;
-				castlingDone = true;
-				
-			}else if(movementDest.i == 0 && movementDest.j == 6 &&
-					movementSrc.piece.type == KING &&
-					blackCastlingAvailable){
-
-				castlingRight(movementSrc, currentBoard);
-				blackCastlingAvailable = false;
-				castlingDone = true;
-
-			}else{
-				//If the king or the tower have moved, disable castling 
-				//for that player
-				if(movementSrc.piece.type == KING || movementSrc.piece.type == TOWER){
-					if(playerTurn == WHITE){
-						whiteCastlingAvailable = false;
-					}else{
-						blackCastlingAvailable = false;
-					}
-				}
-			}
-		}
-
-		if(!castlingDone){
-			//Moves the piece to the selected square. If the movement is set as possible,
-			//there are no conflicts in doing this
-			movementDest.piece = movementSrc.piece;
-			movementSrc.piece = null;
-		}
-
-		//Clear all selections
-		clearPossibleMovements(currentBoard);
-		clearSelectedSquares(currentBoard);
-	}
-
-	/*
-	PRE: The square passed as argument belongs to the passed board
-
-	Argument:
-		-selectedSquare: The square that was clicked
-	
-	Highlights the movements in the board or clears all higlights
-	if an empty square was selected
-	*/
-	function selectSquare(selectedSquare, board){
 		if(selectedSquare != null && selectedSquare.piece != null &&
 				playerTurn == selectedSquare.piece.player){
 			clearSelectedSquares(board);
 			selectedSquare.selected = true;
-			let possibleMovements = getPossibleMovements(selectedSquare, board);
+			setPossibleMovements(selectedSquare, board);
 			lastSelectedSquare = selectedSquare;
-			//Highlights the possible movements
-			for(let i = 0; i < possibleMovements.length; i++){
-				possibleMovements[i].possibleMovement = true;
+			return null;
+		}else if(selectedSquare.possibleMovement == true){
+			let castlingDone = false;
+			//Check for a castling move
+			if(whiteCastlingAvailable || blackCastlingAvailable){
+				if(selectedSquare.i == 7 && selectedSquare.j == 2 &&
+						lastSelectedSquare.piece.type == KING &&
+						whiteCastlingAvailable){
+					if(test){
+						castlingLeft(lastSelectedSquare, newBoard);
+						return newBoard;
+					}else{
+						castlingLeft(lastSelectedSquare, board);
+						whiteCastlingAvailable = false;
+						castlingDone = true;
+					}
+				}else if(selectedSquare.i == 0 && selectedSquare.j == 2 &&
+						lastSelectedSquare.piece.type == KING &&
+						blackCastlingAvailable){
+					if(test){
+						castlingLeft(lastSelectedSquare, newBoard);
+						return newBoard;
+					}else{
+						castlingLeft(lastSelectedSquare, board);
+						blackCastlingAvailable = false;
+						castlingDone = true;
+					}
+				}else if(selectedSquare.i == 7 && selectedSquare.j == 6 &&
+						lastSelectedSquare.piece.type == KING &&
+						whiteCastlingAvailable){
+					if(test){
+						castlingRight(lastSelectedSquare, newBoard);
+						return newBoard;
+					}else{
+						castlingRight(lastSelectedSquare, board);
+						whiteCastlingAvailable = false;
+						castlingDone = true;
+					}
+				}else if(selectedSquare.i == 0 && selectedSquare.j == 6 &&
+						lastSelectedSquare.piece.type == KING &&
+						blackCastlingAvailable){
+					if(test){
+						castlingRight(lastSelectedSquare, newBoard);
+						return newBoard;
+					}else{
+						castlingRight(lastSelectedSquare, board);
+						blackCastlingAvailable = false;
+						castlingDone = true;
+					}
+				}else{
+					//If the king or the tower have moved, disable castling 
+					//for that player
+					if(lastSelectedSquare.piece.type == KING || lastSelectedSquare.piece.type == TOWER){
+						//Because the AI doesn't make any changes without the test flag active,
+						//castling will never be disabled for it. It should be solved by making a system
+						//to commit plays and making both players have to go through it in order to make
+						//a move
+						if(!test){
+							if(playerTurn == WHITE){
+								whiteCastlingAvailable = false;
+							}else{
+								blackCastlingAvailable = false;
+							}
+						}
+					}
+				}
+			}
+			if(!castlingDone){
+				//Moves the piece to the selected square. If the movement is set as possible,
+				//there are no conflicts in doing this
+				if(test){
+					//Moves the piece only in the cloned board
+					newBoard[selectedSquare.i][selectedSquare.j].piece = 
+							newBoard[lastSelectedSquare.i][lastSelectedSquare.j].piece;
+					newBoard[lastSelectedSquare.i][lastSelectedSquare.j].piece = null;
+				}else{
+					selectedSquare.piece = lastSelectedSquare.piece;
+					lastSelectedSquare.piece = null;
+				}
+			}
+
+			if(test){
+				//Return a copy of the new board, this is only used by the AI
+				return newBoard;
+			}else{
+				//Clear all selections
+				clearPossibleMovements(board);
+				clearSelectedSquares(board);
+				//Give the turn to the other player
+				if(playerTurn == WHITE){
+					playerTurn = BLACK;
+					doAITurn();
+				}else{
+					playerTurn = WHITE;
+				}
+				return null;
 			}
 		}else if(selectedSquare != null && selectedSquare.piece == null){
 			clearPossibleMovements(board);
 			clearSelectedSquares(board);
-		}
-	}
-
-	/*
-	Changes the turn to the other player
-	*/
-	function changeTurn(){
-		if(playerTurn == WHITE){
-			playerTurn = BLACK;
-			doAITurn();
-			playerTurn = WHITE;
-		}else{
-			playerTurn = WHITE;
 		}
 	}
 
@@ -943,11 +821,6 @@
 		board[selectedSquare.i][selectedSquare.j + 3].piece = null;
 	}
 
-	/*
-	Arguments:
-		-board: The board that is to have its highlighted squares removed
-	Sets the possibleMovement attribute of all the squares in the provided board to false
-	*/
 	function clearPossibleMovements(board){
 		for(let i = 0; i < 8; i++){
 			for(let j = 0; j < 8; j++){
@@ -956,11 +829,6 @@
 		}
 	}
 
-	/*
-	Arguments:
-		-board: The board that is to have its highlighted squares removed
-	Sets the selected attribute of all the squares in the provided board to false
-	*/
 	function clearSelectedSquares(board){
 		for(let i = 0; i < 8; i++){
 			for(let j = 0; j < 8; j++){
