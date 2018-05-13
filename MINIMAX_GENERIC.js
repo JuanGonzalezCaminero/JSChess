@@ -23,11 +23,7 @@ function minimax(node, player, ply, initialNode){
 	let options = new Array(0);
 
 	if(ply != 0){
-		if(player == MIN){
-			children = getChildren(node, MIN);
-		}else{
-			children = getChildren(node, MAX);
-		}
+		children = getChildren(node);
 		for(let i = 0; i < children.length; i++){
 			if(player == MIN){
 				heuristicValues.push(minimax(children[i], MAX, ply - 1, false));
