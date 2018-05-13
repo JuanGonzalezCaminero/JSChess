@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+<canvas id = "canvas" width="800" height="800" style="border: 10px solid red">
+</canvas>
+<script type="text/javascript">
+const MIN = 0;
+const MAX = 1;
+
+var firstNode = 0;
+
+function getChildren(node){
+	return [node + 1, node + 2, node + 3];
+}
+
+function heuristicValue(node){
+	return node;
+}
+
+var result = minimax(firstNode, MAX, 2);
+console.log(result);
+
+
+//A generic implementation of the MINIMAX algorithm 
+//for two-player games. A program using this must implement
+//a method for calculating the heuristic value of the states
+//and another to generate the states derivated from another
+
+
+/*
+Args:
+	-node: Current node
+	-player: MIN or MAX
+	-ply: how many levels to explore in advance from this one
+Returns: 
+	-The best option among the children of the given node
+*/
+
+function minimax(node, player, ply){
+	let children = new Array(0);
+	let heuristicValues = new Array(0);
+	let nextPlayer;
+
+	if(player == MIN){
+		nextPlayer = MAX;
+	}else{
+		nextPlayer = MIN;
+	}
+
+	if(ply != 0){
+		children = getChildren(node);
+		for(let i = 0; i < children.length; i++){
+			heuristicValues.push(minimax(children[i], nextPlayer, ply - 1));
+		}
+		//Get the index of the node with the Larger or Smaller value
+		//depending on the current player
+		if(player == MIN){
+			//Get the index of the node with the Smaller heuristic value
+			//Getting the Smaller value
+			let min = heuristicValues.reduce(function(previousVal, currentVal, index, array) {
+				//previousVal is the last returned value
+				if(currentVal < previousVal){
+					return currentVal;
+				}else{
+					return previousVal;
+				}
+			});
+			//If there are several nodes with the same value, only the first one
+			//is returned
+			return(children[heuristicValues.indexOf(min)]);
+		}else{
+			//Get the index of the node with the Larger heuristic value
+			//Getting the Larger value
+			let max = heuristicValues.reduce(function(previousVal, currentVal, index, array) {
+				//previousVal is the last returned value
+				if(currentVal > previousVal){
+					return currentVal;
+				}else{
+					return previousVal;
+				}
+			});
+			//If there are several nodes with the same value, only the first one
+			//is returned
+			return(children[heuristicValues.indexOf(max)]);
+		}
+	}else{
+		return(heuristicValue(node));
+	}
+}
+</script>
+</body>
+</html>
