@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title></title>
+	<title>CHESSMINATOR</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	<script src="MINIMAX.js"></script>
 </head>
@@ -549,10 +549,11 @@
 			}
 		}
 
-		let options = minimax(boardClone, BLACK, 1);
+		let options = minimax(boardClone, BLACK, 2, true);
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
 		//has the best heuristic value
+		console.log(options.length);
 		let newBoard = options[Math.floor(Math.random() * (options.length - 0)) + 0];
 		//Clears all previously set possible movements and selected squares
 		clearSelectedSquares(newBoard);
@@ -635,7 +636,7 @@
 							pieceValue = 9;
 							break;
 						default:
-							pieceValue = 0;
+							pieceValue = 18;
 							break;
 					}
 					if(node[i][j].piece.player == MAX){
