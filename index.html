@@ -605,6 +605,8 @@
 			}
 		}
 		movementMap.clear();
+		whiteCastlingAvailableTest = whiteCastlingAvailable;
+		blackCastlingAvailableTest = blackCastlingAvailable;
 		let options = minimax(boardClone, BLACK, 2, true);
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
@@ -616,7 +618,6 @@
 		clearPossibleMovements(newBoard);
 		//Determines which movement was done and commits it
 		let movement = movementMap.get(newBoard);
-		playerTurn == AIPlayer;
 		commitMovement(currentBoard[movement.srci][movement.srcj],
 						currentBoard[movement.desti][movement.destj]);
 	}
@@ -703,7 +704,7 @@
 							pieceValue = 9;
 							break;
 						default:
-							pieceValue = 18;
+							pieceValue = 100;
 							break;
 					}
 					if(node[i][j].piece.player == MAX){
