@@ -143,6 +143,11 @@
 		}
 	});
 
+	if(AIPlayer == WHITE){
+		doAITurn();
+		playerTurn == BLACK;
+	}
+
 	function update() {
 		//Called 60 times per second
 		render();
@@ -607,7 +612,7 @@
 		movementMap.clear();
 		whiteCastlingAvailableTest = whiteCastlingAvailable;
 		blackCastlingAvailableTest = blackCastlingAvailable;
-		let options = minimax(boardClone, BLACK, 2, true);
+		let options = minimax(boardClone, AIPlayer, 2, true);
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
 		//has the best heuristic value
@@ -905,12 +910,18 @@
 	Changes the turn to the other player
 	*/
 	function changeTurn(){
-		if(playerTurn == WHITE){
-			playerTurn = BLACK;
-			doAITurn();
+		if(playerTurn == BLACK){
 			playerTurn = WHITE;
+			if(AIPlayer == WHITE){
+				doAITurn();
+				playerTurn = BLACK;
+			}
 		}else{
-			playerTurn = WHITE;
+			playerTurn = BLACK;
+			if(AIPlayer == BLACK){
+				doAITurn();
+				playerTurn = WHITE;
+			}
 		}
 	}
 
