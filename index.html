@@ -6,8 +6,9 @@
 	<script src="MINIMAX.js"></script>
 </head>
 <body>
-<canvas id = "canvas" width="768" height="768" style="border: 10px solid #d18b47">
+<canvas id = "canvas" width="768" height="768" style="border: 10px solid #d18b47; float: left; margin-right: 10px">
 </canvas>
+<p id = "check" style="font-size: 20pt"></p>
 <script type="text/javascript">
 	const NONE = 0;
 	const KING = 1;
@@ -184,8 +185,6 @@
 	}
 
 	/*
-	Sets the possibleMovement attribute of each square that is a
-	legal movement for the piece in the square that was selected to true
 	Arguments:
 		-selectedSquare: The square containing the piece from which we want 
 		to know the possible movements
@@ -632,9 +631,6 @@
 				}
 			}
 		}
-		//Check Test
-		//If any of the selected movements leads to the enemy king, it is in check
-		//TODO
 
 		if(!checkTest){
 			//Saves the state of the AI castling flags
@@ -844,8 +840,6 @@
 				}
 			}
 		}
-		//console.log("Value of node: ",totalValue);
-		//console.log(node);
 		return totalValue;
 	}
 
@@ -1082,6 +1076,44 @@
 		//clearPossibleMovements(currentBoard);
 		//clearSelectedSquares(currentBoard);
 		clearAllFlags(currentBoard);
+
+		//If a movement was performed, then this player is not in check
+		$("#check").text("");
+		//Test if this movement results in a check to the enemy king
+		if(checkTest()){
+			if(playerTurn == WHITE){
+				$("#check").text("Black King in check");
+			}else{
+				$("#check").text("White King in check");
+			}
+		}
+	}
+
+	/*
+	Returns:
+		-True if the king of the enemy player is in check
+	*/
+	function checkTest(){
+		//Gets all the possible movements from the current player if no
+		//enemy piece was moved, if any of those targets the king, returns true
+		let i;
+		let j;
+		let allMovements = new Array(0);
+		for(i = 0; i < 8; i++){
+			for(j = 0; j < 8; j++){
+				if(currentBoard[i][j].piece != null && 
+						currentBoard[i][j].piece.player == playerTurn){
+					allMovements = allMovements.concat(getPossibleMovements(currentBoard[i][j],
+																currentBoard, true, true));
+				}
+			}
+		}
+		for(i = 0; i < allMovements.length; i++){
+			if(allMovements[i].piece != null && allMovements[i].piece.type == KING){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*
