@@ -1048,29 +1048,28 @@
 			}
 		}
 
-		//When a pawn moves two squares, the first square is marked as in Passing, that 
-		//reference will be cleared in the next turn of the pawn's owner
-		if(movementSrc.piece.type == PAWN){
-			if(Math.abs(movementDest.i - movementSrc.i) == 2){
-				if(movementSrc.piece.player == WHITE){
-					currentBoard[movementDest.i + 1][movementDest.j].inPassingWhite = true
-					currentBoard[movementDest.i + 1][movementDest.j].inPassingLastTurn = true
-				}else{
-					currentBoard[movementDest.i - 1][movementDest.j].inPassingBlack = true
-					currentBoard[movementDest.i - 1][movementDest.j].inPassingLastTurn = true
-				}
-			}else if(movementDest.inPassingBlack || movementDest.inPassingWhite){
-				//if a pawn moves to a square marked as in Passing, the pawn that just passed
-				//that square is captured
-				if(movementSrc.piece.player == WHITE){
-					currentBoard[movementDest.i + 1][movementDest.j].piece = null;
-				}else{
-					currentBoard[movementDest.i - 1][movementDest.j].piece = null;
+		if(!castlingDone){
+			//When a pawn moves two squares, the first square is marked as in Passing, that 
+			//reference will be cleared in the next turn of the pawn's owner
+			if(movementSrc.piece.type == PAWN){
+				if(Math.abs(movementDest.i - movementSrc.i) == 2){
+					if(movementSrc.piece.player == WHITE){
+						currentBoard[movementDest.i + 1][movementDest.j].inPassingWhite = true
+						currentBoard[movementDest.i + 1][movementDest.j].inPassingLastTurn = true
+					}else{
+						currentBoard[movementDest.i - 1][movementDest.j].inPassingBlack = true
+						currentBoard[movementDest.i - 1][movementDest.j].inPassingLastTurn = true
+					}
+				}else if(movementDest.inPassingBlack || movementDest.inPassingWhite){
+					//if a pawn moves to a square marked as in Passing, the pawn that just passed
+					//that square is captured
+					if(movementSrc.piece.player == WHITE){
+						currentBoard[movementDest.i + 1][movementDest.j].piece = null;
+					}else{
+						currentBoard[movementDest.i - 1][movementDest.j].piece = null;
+					}
 				}
 			}
-		}
-
-		if(!castlingDone){
 			//Moves the piece to the selected square. If the movement is set as possible,
 			//there are no conflicts in doing this
 			movementDest.piece = movementSrc.piece;
@@ -1118,12 +1117,12 @@
 		if(playerTurn == BLACK){
 			playerTurn = WHITE;
 			if(AIPlayer == WHITE){
-				doAITurn();
+				//doAITurn();
 			}
 		}else{
 			playerTurn = BLACK;
 			if(AIPlayer == BLACK){
-				doAITurn();
+				//doAITurn();
 			}
 		}
 	}

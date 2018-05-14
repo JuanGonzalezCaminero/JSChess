@@ -28,6 +28,11 @@ function minimax(node, player, ply, initialNode){
 		}else{
 			children = getChildren(node, MAX);
 		}
+		//In the case of a checkmate, the children list will be empty in which
+		//case, the heuristic value of this node is returned
+		if(children.length == 0){
+			return(heuristicValue(node));
+		}
 		for(let i = 0; i < children.length; i++){
 			if(player == MIN){
 				heuristicValues.push(minimax(children[i], MAX, ply - 1, false));
