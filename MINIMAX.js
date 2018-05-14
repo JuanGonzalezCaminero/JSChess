@@ -35,6 +35,7 @@ function minimax(node, player, ply, initialNode){
 				heuristicValues.push(minimax(children[i], MIN, ply - 1, false));
 			}
 		}
+		/*
 		if(initialNode){
 			console.log("Offered to initialNode:");
 		}
@@ -43,6 +44,7 @@ function minimax(node, player, ply, initialNode){
 		}else{
 			console.log("Offered to MAX: node (level", ply, "): ", heuristicValues);
 		}
+		*/
 		if(initialNode){
 			//Get the index of the node with the Larger or Smaller value
 			//depending on the current player
@@ -64,7 +66,7 @@ function minimax(node, player, ply, initialNode){
 						options.push(children[index]);
 					}
 				}
-				console.log("Chosen: ", min);
+				//console.log("Chosen: ", min);
 				return options;
 			}else{
 				//Get the index of the node with the Larger heuristic value
@@ -84,7 +86,7 @@ function minimax(node, player, ply, initialNode){
 						options.push(children[index]);
 					}
 				}
-				console.log("Chosen: ", max);
+				//console.log("Chosen: ", max);
 				return options;
 			}
 		}else{
@@ -101,7 +103,7 @@ function minimax(node, player, ply, initialNode){
 						return previousVal;
 					}
 				});
-				console.log("Promoted: ", min);
+				//console.log("Promoted: ", min);
 				return min;
 			}else{
 				//Get the index of the node with the Larger heuristic value
@@ -114,7 +116,7 @@ function minimax(node, player, ply, initialNode){
 						return previousVal;
 					}
 				});
-				console.log("Promoted: ", max);
+				//console.log("Promoted: ", max);
 				return max;
 			}
 		}

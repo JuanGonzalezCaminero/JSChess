@@ -138,8 +138,13 @@
 			selectSquare(selectedSquare, currentBoard);
 		}else{
 			commitMovement(lastSelectedSquare, selectedSquare);
-			//Give the turn to the other player
-			changeTurn();
+			//Force the rendering of the new board
+			render();
+			//Give the turn to the other player after waiting a bit
+			//to allow the changes to render
+			setTimeout(function(){
+				changeTurn();
+			}, 50);
 		}
 	});
 
@@ -612,7 +617,7 @@
 		movementMap.clear();
 		whiteCastlingAvailableTest = whiteCastlingAvailable;
 		blackCastlingAvailableTest = blackCastlingAvailable;
-		let options = minimax(boardClone, AIPlayer, 2, true);
+		let options = minimax(boardClone, AIPlayer, 3, true);
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
 		//has the best heuristic value
@@ -627,8 +632,13 @@
 		clearPossibleMovements(newBoard);
 		//Determines which movement was done and commits it
 		let movement = movementMap.get(newBoard);
-		commitMovement(currentBoard[movement.srci][movement.srcj],
-						currentBoard[movement.desti][movement.destj]);
+		//Renders the possible movements of the piece it selected before moving it,
+		//just so the other player can notice
+		selectSquare(currentBoard[movement.srci][movement.srcj], currentBoard);
+		setTimeout(function(){
+			commitMovement(currentBoard[movement.srci][movement.srcj],
+					currentBoard[movement.desti][movement.destj]);
+		}, 1000);
 	}
 
 	/*
