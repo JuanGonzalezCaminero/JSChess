@@ -631,12 +631,9 @@
 		//Renders the possible movements of the piece it selected before moving it,
 		//just so the other player can notice
 		selectSquare(currentBoard[movement.srci][movement.srcj], currentBoard);
-		render();
 		setTimeout(function(){
 			commitMovement(currentBoard[movement.srci][movement.srcj],
 					currentBoard[movement.desti][movement.destj]);
-			//Gives the turn to the other player
-			changeTurn();
 		}, 1000);
 	}
 
@@ -923,11 +920,13 @@
 			playerTurn = WHITE;
 			if(AIPlayer == WHITE){
 				doAITurn();
+				playerTurn = BLACK;
 			}
 		}else{
 			playerTurn = BLACK;
 			if(AIPlayer == BLACK){
 				doAITurn();
+				playerTurn = WHITE;
 			}
 		}
 	}
