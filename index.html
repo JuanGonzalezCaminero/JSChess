@@ -621,10 +621,6 @@
 		//Chooses the next play randomly among the options that were
 		//found, there will be multiple choices if more than one play 
 		//has the best heuristic value
-		console.log(options.length);
-		for(let index = 0; index < options.length; index++){
-			console.log(heuristicValue(options[index]));
-		}
 		let newBoard = options[Math.floor(Math.random() * (options.length - 0)) + 0];
 		//console.log("New board value: ", heuristicValue(newBoard));
 		//Clears all previously set possible movements and selected squares
